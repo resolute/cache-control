@@ -1,7 +1,7 @@
 {
   "name": "@resolute/cache-control",
   "version": "0.0.1",
-  "description": "Generate appropriate `Cache-Control` and `Expires`",
+  "description": "Generate appropriate `Cache-Control` and `Expires` headers",
   "main": "lib",
   "types": "lib",
   "scripts": {
