@@ -1,0 +1,40 @@
+{
+  "name": "@resolute/cache-control",
+  "version": "0.0.1",
+  "description": "Generate appropriate `Cache-Control` and `Expires`",
+  "main": "lib",
+  "types": "lib",
+  "scripts": {
+    "build": "npx tsc",
+    "release": "npx np",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/resolute/cache-control.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Resolute Digital",
+  "dependencies": {},
+  "devDependencies": {
+    "np": "*",
+    "typescript": "*"
+  },
+  "files": [
+    "lib"
+  ],
+  "bugs": {
+    "url": "https://github.com/resolute/cache-control/issues"
+  },
+  "homepage": "https://github.com/resolute/cache-control",
+  "directories": {
+    "lib": "lib"
+  },
+  "keywords": [
+    "cache-control",
+    "expires"
+  ],
+  "license": "ISC"
+}
