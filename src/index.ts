@@ -1,4 +1,28 @@
-// import net from 'net';
+/// <reference types="node" />
+import { FastifyReply } from 'fastify';
+import { ServerResponse } from 'http';
+import { Http2ServerResponse } from 'http2';
+
+type HttpResponse = ServerResponse | Http2ServerResponse;
+
+interface DateLike {
+    oUTCString: typeof Date.prototype.toUTCString
+}
+
+export interface CacheDecorator {
+    (
+        this: FastifyReply<HttpResponse>,
+        ttl: Date | number | DateLike,
+        proxy?: number,
+    ): FastifyReply<HttpResponse>;
+}
+
+declare module 'fastify' {
+    interface FastifyReply<HttpResponse> {
+        cache: CacheDecorator;
+    }
+
+}
 
 /**
  * Generate appropriate “Cache-Control” and “Expires” headers
@@ -10,12 +34,12 @@
  * the Expires header is more restrictive.” This is important when you intend to
  * have your response cache invalidated at a specific time (i.e. midnight).
  *
- * @param  {Date | number} [ttl]   - A Date object or number (milliseconds)
+ * @param  {Date | number} ttl   - A Date object or number (milliseconds)
  * @param  {number}        [proxy] - number (milliseconds)
  * @return {{ Content-Type: string, Expires: string }}
  *
  */
-export const cache = (ttl, proxy) => {
+export const cache = (ttl: Date | number | DateLike, proxy?: number) => {
     if (ttl instanceof Date) {
         // Expires @ specific time
         // Cache-Control: public
@@ -25,8 +49,8 @@ export const cache = (ttl, proxy) => {
         };
     }
 
-    if (positiveFinite(ttl)) {
-        const sMaxAge = positiveFinite(proxy) ? `, s-maxage=${msToSeconds(proxy)}` : '';
+    if (isPositiveFinite(ttl)) {
+        const sMaxAge = isPositiveFinite(proxy) ? `, s-maxage=${msToSeconds(proxy)}` : '';
         return {
             'Cache-Control': `public, max-age=${msToSeconds(ttl)}${sMaxAge}`
         }
@@ -35,26 +59,40 @@ export const cache = (ttl, proxy) => {
     return {};
 }
 
-// Note: using an arrow function will break the binding of this to the Fastify
-// request instance.
-// https://github.com/fastify/fastify/blob/master/docs/Decorators.md
-export const fastifyReplyDecorator = function (ttl, proxy) {
-    Object.entries(cache(ttl, proxy)).forEach(([key, val]) => {
-        // @ts-ignore
+/**
+ * Generate appropriate “Cache-Control” and “Expires” headers
+ *
+ * IMPORTANT: if we receive a Date for ttl we must not include the “max-age”
+ * portion of the Cache-Control header. This is simply because RFC2616 Section
+ * 14.9.3 states that “If a response includes both an Expires header and a max-
+ * age directive, the max-age directive overrides the Expires header, even if
+ * the Expires header is more restrictive.” This is important when you intend to
+ * have your response cache invalidated at a specific time (i.e. midnight).
+ *
+ * @param  {Date | number} ttl   - A Date object or number (milliseconds)
+ * @param  {number}        [proxy] - number (milliseconds)
+ * @return {{ Content-Type: string, Expires: string }}
+ *
+ */
+export const fastifyReplyDecorator: CacheDecorator = function (ttl: Date | number | DateLike, proxy?: number) {
+    // Note: using an arrow function will break the binding of this to the Fastify
+    // request instance.
+    // https://github.com/fastify/fastify/blob/master/docs/Decorators.md
+    const headers = cache(ttl, proxy);
+    for (const [key, val] of Object.entries(headers)) {
         this.header(key, val);
-    });
-    // @ts-ignore
+    }
     return this;
 };
 
-const positiveFinite = (num) => {
+const isPositiveFinite = (num: any): num is number => {
     if (typeof num === 'number' && Number.isFinite(num) && num > 0) {
-        return num;
+        return true;
     }
     return false;
 };
 
-const msToSeconds = (num) => ~~(num / 1e3);
+const msToSeconds = (num: number) => ~~(num / 1e3);
 
 // hollow for now
 export const purge = () => { };
@@ -121,3 +159,4 @@ export const purge = () => { };
 //     Array(Math.ceil(arr.length / n)),
 //     (_, i) => arr.slice(i * n, i * n + n)
 // );
+export default cache;

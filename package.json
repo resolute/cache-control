@@ -20,7 +20,8 @@
   "dependencies": {},
   "devDependencies": {
     "np": "*",
-    "typescript": "*"
+    "typescript": "*",
+    "fastify": "*"
   },
   "files": [
     "lib"
