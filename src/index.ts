@@ -1,9 +1,4 @@
-/// <reference types="node" />
 import { FastifyReply } from 'fastify';
-import { ServerResponse } from 'http';
-import { Http2ServerResponse } from 'http2';
-
-type HttpResponse = ServerResponse | Http2ServerResponse;
 
 interface DateLike {
     oUTCString: typeof Date.prototype.toUTCString
@@ -11,17 +6,16 @@ interface DateLike {
 
 export interface CacheDecorator {
     (
-        this: FastifyReply<HttpResponse>,
+        this: FastifyReply,
         ttl: Date | number | DateLike,
         proxy?: number,
-    ): FastifyReply<HttpResponse>;
+    ): FastifyReply;
 }
 
 declare module 'fastify' {
-    interface FastifyReply<HttpResponse> {
+    interface FastifyReply {
         cache: CacheDecorator;
     }
-
 }
 
 /**
@@ -71,10 +65,9 @@ export const cache = (ttl: Date | number | DateLike, proxy?: number) => {
  *
  * @param  {Date | number} ttl   - A Date object or number (milliseconds)
  * @param  {number}        [proxy] - number (milliseconds)
- * @return {{ Content-Type: string, Expires: string }}
  *
  */
-export const fastifyReplyDecorator: CacheDecorator = function (ttl: Date | number | DateLike, proxy?: number) {
+export const fastifyReplyDecorator: CacheDecorator = function (ttl, proxy) {
     // Note: using an arrow function will break the binding of this to the Fastify
     // request instance.
     // https://github.com/fastify/fastify/blob/master/docs/Decorators.md
